@@ -1,16 +1,41 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <img alt="Vue logo" src="./assets/cagale.png">
+  <LoginComponent 
+    v-if=!hasToken
+    @refreshData=getToken()
+  />
+  <PageComponent
+    v-else
+  />
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import LoginComponent from './components/LoginComponent.vue'
+import PageComponent from './components/PageComponent.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    LoginComponent,
+    PageComponent
+  },
+  data() {
+    return {
+     hasToken:false
+    };
+  },
+  mounted() {
+    console.log(localStorage.getItem('authToken'))
+    this.hasToken = localStorage.getItem('authToken') !== null && localStorage.getItem('authToken') !== '';
+  },
+  methods: {
+    getToken () {
+      console.log("getToken")
+      this.hasToken = localStorage.getItem('authToken') !== null && localStorage.getItem('authToken') !== ''
+    }
   }
+
+  
 }
 </script>
 
