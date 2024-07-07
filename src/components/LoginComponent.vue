@@ -37,14 +37,10 @@ export default {
         
         if (response.data.success) {
           const token = response.data.token;
-          // Guarda el token en el local storage
-          localStorage.setItem('authToken', token);
-
-          // Actualiza la propiedad del token
+          localStorage.setItem('authToken', token); // Guardamos el token en el local storage
           this.token = token;
           this.$emit('refreshData')
 
-          console.log('Login exitoso:', response.data);
         } else {
           console.error('Error en el login:', response.data.message);
         }

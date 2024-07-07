@@ -3,8 +3,8 @@
     <div class="filter-container">
       <label for="screenTypeFilter">Filtrar por: </label>
       <select id="screenTypeFilter" v-model="screenType">
-        <option value="1">Cocina</option>
-        <option value="2">Barra</option>
+        <option value="1">Barra</option>
+        <option value="2">Cocina</option>
       </select>
     </div>
     <div class="tables-container">
@@ -16,7 +16,8 @@
               <th>Nombre</th>
               <th>Cantidad</th>
               <th>Mesa</th>
-              <th>Numero Pedido</th>
+              <th>Pedido</th>
+              <th>En preparación</th>
             </tr>
           </thead>
           <tbody>
@@ -31,6 +32,9 @@
               <td>{{ ticket.cantidad }}</td>
               <td>{{ ticket.mesa }}</td>
               <td>{{ ticket.numeroPedido }}</td>
+              <td>
+                <button @click="changeTicketStatus(ticket, 2)">➡️</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -43,7 +47,9 @@
               <th>Nombre</th>
               <th>Cantidad</th>
               <th>Mesa</th>
-              <th>Numero Pedido</th>
+              <th>Pedido</th>
+              <th>Pentiente</th>
+              <th>Finalizado</th>
             </tr>
           </thead>
           <tbody>
@@ -58,6 +64,12 @@
               <td>{{ ticket.cantidad }}</td>
               <td>{{ ticket.mesa }}</td>
               <td>{{ ticket.numeroPedido }}</td>
+              <td>
+                <button @click="changeTicketStatus(ticket, 1)">⬅️</button>
+              </td>
+              <td>
+                <button @click="changeTicketStatus(ticket, 3)">➡️</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -70,7 +82,8 @@
               <th>Nombre</th>
               <th>Cantidad</th>
               <th>Mesa</th>
-              <th>Numero Pedido</th>
+              <th>Pedido</th>
+              <th>En preparación</th>
             </tr>
           </thead>
           <tbody>
@@ -85,6 +98,9 @@
               <td>{{ ticket.cantidad }}</td>
               <td>{{ ticket.mesa }}</td>
               <td>{{ ticket.numeroPedido }}</td>
+              <td>
+                <button @click="changeTicketStatus(ticket, 2)">⬅️</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -105,22 +121,19 @@ export default {
   },
   created() {
     this.fetchTickets(); // Llama a fetchTickets cuando se crea el componente
+    this.setupAutoRefresh(); // Configura la actualización automática
   },
   computed: {
     filteredTickets() {
-      // Filtrar los tickets según el valor del screenType
-      return this.tickets.filter(ticket => ticket.screenType == this.screenType);
+      return this.tickets.filter(ticket => ticket.screenType == this.screenType); // Filtra tickets según el valor del screenType seleccionado
     },
     pendingTickets() {
-      // Filtrar los tickets pendientes (status = 1)
       return this.filteredTickets.filter(ticket => ticket.status == 1);
     },
     inProgressTickets() {
-      // Filtrar los tickets en preparación (status = 2)
       return this.filteredTickets.filter(ticket => ticket.status == 2);
     },
     completedTickets() {
-      // Filtrar los tickets finalizados (status = 3)
       return this.filteredTickets.filter(ticket => ticket.status == 3);
     }
   },
@@ -133,7 +146,7 @@ export default {
             'Authorization': `Bearer ${authToken}` // Pasar el token en el encabezado de la solicitud
           }
         });
-        
+
         if (response.data.success && response.data.tickets) {
           const tickets = response.data.tickets;
 
@@ -149,6 +162,7 @@ export default {
             const ticketOrderInfo = productResponse.data.ticketOrderInfo;
             // Mapear la información del pedido al formato requerido
             return ticketOrderInfo.map(order => ({
+              id: order.id,
               nombre: order.name,
               cantidad: order.units,
               mesa: ticket.table_id,
@@ -166,6 +180,30 @@ export default {
       } catch (error) {
         console.error('Error fetching tickets:', error); // Manejar errores
       }
+    },
+    async changeTicketStatus(ticket, status) {
+      const authToken = localStorage.getItem('authToken'); // Obtener el token de autenticación del localStorage
+      const url = `http://192.168.1.133:8081/api/productOrders/${status}/status`;
+      const data = { order_id: ticket.id };
+
+      try {
+        const response = await axios.post(url, data, {
+          headers: {
+            'Authorization': `Bearer ${authToken}` // Pasar el token en el encabezado de la solicitud
+          }
+        });
+
+        if (response.data.success) {
+          ticket.status = status; // Actualizar el estado del ticket localmente si la solicitud fue exitosa
+        }
+      } catch (error) {
+        console.error(`Error changing ticket status to ${status}:`, error); // Manejar errores
+      }
+    },
+    setupAutoRefresh() {
+      setInterval(() => {
+        this.fetchTickets();
+      }, 8000); // Actualizar cada 8 segundos
     }
   }
 };
@@ -206,5 +244,12 @@ th {
 h3 {
   text-align: center;
   margin-bottom: 10px;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2em; /* Aumentar el tamaño de la fuente */
 }
 </style>
